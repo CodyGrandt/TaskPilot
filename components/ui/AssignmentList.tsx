@@ -11,6 +11,7 @@ type Assignment = {
 type Props = {
   assignments: Assignment[];
   isLoading: boolean;
+  onDelete: (id: string) => void;
 };
 
 const priorityStyles: Record<string, string> = {
@@ -19,7 +20,7 @@ const priorityStyles: Record<string, string> = {
   LOW: "bg-green-100 text-green-700",
 };
 
-export function AssignmentList({ assignments, isLoading }: Props) {
+export function AssignmentList({ assignments, isLoading, onDelete }: Props) {
   if (isLoading) {
     return <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>;
   }
@@ -41,11 +42,20 @@ export function AssignmentList({ assignments, isLoading }: Props) {
         >
           <div className="flex items-start justify-between gap-2">
             <span className="font-medium text-foreground text-sm">{a.title}</span>
-            <span
-              className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${priorityStyles[a.priority]}`}
-            >
-              {a.priority}
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span
+                className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${priorityStyles[a.priority]}`}
+              >
+                {a.priority}
+              </span>
+              <button
+                onClick={() => onDelete(a.id)}
+                className="text-muted-foreground hover:text-red-500 transition-colors text-xs"
+                aria-label="Delete assignment"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
             Due: {new Date(a.dueDate).toLocaleDateString("en-US", {

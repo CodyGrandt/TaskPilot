@@ -59,6 +59,11 @@ export default function Dashboard() {
     fetchAssignments();
   }, [fetchAssignments]);
 
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/assignments/${id}`, { method: "DELETE" });
+    setAssignments((prev) => prev.filter((a) => a.id !== id));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim()) {
@@ -108,7 +113,7 @@ export default function Dashboard() {
 
             <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
               <h3 className="text-lg font-medium text-foreground">Your Assignments</h3>
-              <AssignmentList assignments={assignments} isLoading={isLoadingAssignments} />
+              <AssignmentList assignments={assignments} isLoading={isLoadingAssignments} onDelete={handleDelete} />
             </div>
           </div>
 
