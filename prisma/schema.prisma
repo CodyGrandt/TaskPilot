@@ -23,7 +23,9 @@ model Assignment {
   title         String
   description   String?
   dueDate       DateTime
+  dueTime       String?
   priority      Priority       @default(MEDIUM)
+  status        Status         @default(NOT_STARTED)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   userId        String
@@ -52,4 +54,10 @@ enum Priority {
   LOW
   MEDIUM
   HIGH
+}
+
+enum Status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
 }

@@ -15,20 +15,26 @@ export function AssignmentForm({ onSuccess }: Props) {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateAssignmentInput>({
     resolver: zodResolver(createAssignmentSchema),
-    defaultValues: { priority: "MEDIUM" },
+    defaultValues: { priority: "MEDIUM", status: "NOT_STARTED" },
   });
 
   const onSubmit = async (data: CreateAssignmentInput) => {
-    const dueDate = new Date(data.dueDate + "T00:00:00.000Z").toISOString();
     const res = await fetch("/api/assignments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, dueDate }),
+      body: JSON.stringify(data),
     });
-    if (res.ok) { reset(); onSuccess(); }
+    if (res.ok) {
+      reset();
+      onSuccess();
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setError("root", { message: body?.error ?? "Something went wrong. Please try again." });
+    }
   };
 
   return (
@@ -46,11 +52,26 @@ export function AssignmentForm({ onSuccess }: Props) {
           {errors.dueDate && <p className="text-xs text-red-500 mt-1">{errors.dueDate.message}</p>}
         </div>
         <div>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Due Time</label>
+          <input type="time" {...register("dueTime")} className={inputCls} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
           <label className="block text-sm font-medium text-foreground mb-1.5">Priority</label>
           <select {...register("priority")} className={inputCls}>
             <option value="LOW">Low</option>
             <option value="MEDIUM">Medium</option>
             <option value="HIGH">High</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Status</label>
+          <select {...register("status")} className={inputCls}>
+            <option value="NOT_STARTED">Not Started</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="COMPLETE">Complete</option>
           </select>
         </div>
       </div>
@@ -65,6 +86,9 @@ export function AssignmentForm({ onSuccess }: Props) {
         />
       </div>
 
+      {errors.root && (
+        <p className="text-xs text-red-500">{errors.root.message}</p>
+      )}
       <Button type="submit" disabled={isSubmitting} className="w-full mt-1">
         {isSubmitting ? "Adding..." : "Add Assignment"}
       </Button>

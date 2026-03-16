@@ -13,7 +13,9 @@ type Assignment = {
   title: string;
   description?: string | null;
   dueDate: string;
+  dueTime?: string | null;
   priority: "LOW" | "MEDIUM" | "HIGH";
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETE";
 };
 
 function Logo() {
@@ -47,6 +49,18 @@ export default function Dashboard() {
   const handleDelete = async (id: string) => {
     await fetch(`/api/assignments/${id}`, { method: "DELETE" });
     setAssignments((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const handleUpdate = async (id: string, data: { priority?: string; status?: string }) => {
+    const res = await fetch(`/api/assignments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setAssignments((prev) => prev.map((a) => a.id === id ? { ...a, ...updated } : a));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -126,9 +140,9 @@ export default function Dashboard() {
               {/* Card body */}
               <div className="px-6 py-4">
                 {view === "list" ? (
-                  <AssignmentList assignments={assignments} isLoading={isLoading} onDelete={handleDelete} />
+                  <AssignmentList assignments={assignments} isLoading={isLoading} onDelete={handleDelete} onUpdate={handleUpdate} />
                 ) : (
-                  <AssignmentCalendar assignments={assignments} onDelete={handleDelete} />
+                  <AssignmentCalendar assignments={assignments} onDelete={handleDelete} onUpdate={handleUpdate} />
                 )}
               </div>
             </div>
