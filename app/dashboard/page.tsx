@@ -1,17 +1,24 @@
 "use client";
 
-import React from "react"
-
-import { useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { AssignmentForm } from "@/components/ui/AssignmentForm";
+import { AssignmentList } from "@/components/ui/AssignmentList";
 import { Send } from "lucide-react";
+
+type Assignment = {
+  id: string;
+  title: string;
+  description?: string | null;
+  dueDate: string;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+};
 
 function PilotIcon({ size = "default" }: { size?: "small" | "default" }) {
   const dimensions = size === "small" ? "w-10 h-10" : "w-16 h-16";
   const iconSize = size === "small" ? 20 : 32;
-  
+
   return (
     <div className={`${dimensions} bg-foreground rounded-xl flex items-center justify-center`}>
       <svg
@@ -35,12 +42,26 @@ function PilotIcon({ size = "default" }: { size?: "small" | "default" }) {
 export default function Dashboard() {
   const { user } = useUser();
   const [prompt, setPrompt] = useState("");
-  const [selectedDate] = useState<Date | undefined>(new Date());
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(true);
+
+  const fetchAssignments = useCallback(async () => {
+    setIsLoadingAssignments(true);
+    const res = await fetch("/api/assignments");
+    if (res.ok) {
+      const data = await res.json();
+      setAssignments(data);
+    }
+    setIsLoadingAssignments(false);
+  }, []);
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim()) {
-      // Handle AI prompt submission here
       console.log("Submitted prompt:", prompt);
       setPrompt("");
     }
@@ -70,79 +91,69 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-foreground">
+            Hello, {user?.firstName || "Pilot"}!
+          </h2>
+          <p className="text-muted-foreground">What would you like to plan today?</p>
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - AI Prompt Section */}
+          {/* Left Column — Assignments */}
           <div className="space-y-6">
-            <div className="text-center lg:text-left">
-              <h2 className="text-2xl font-semibold text-foreground mb-2">
-                Hello, {user?.firstName || "Pilot"}!
-              </h2>
-              <p className="text-muted-foreground">
-                What would you like to plan today?
-              </p>
+            <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
+              <h3 className="text-lg font-medium text-foreground">Add Assignment</h3>
+              <AssignmentForm onSuccess={fetchAssignments} />
             </div>
 
-            {/* AI Prompt Input */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative">
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Tell me about your tasks, deadlines, or study plans..."
-                  className="w-full min-h-32 p-4 pr-12 rounded-2xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                />
-                <Button
-                  type="submit"
-                  className="absolute bottom-3 right-3 rounded-full bg-foreground text-background hover:bg-foreground/90"
-                  disabled={!prompt.trim()}
-                >
-                  <Send className="w-4 h-4" />
-                  <span className="sr-only">Send prompt</span>
-                </Button>
-              </div>
-            </form>
-
-            {/* Quick Actions */}
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Quick prompts:</p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "Plan my study schedule",
-                  "Help with assignment deadlines",
-                  "Organize my week",
-                ].map((suggestion) => (
-                  <Button
-                    key={suggestion}
-                    variant="outline"
-                    className="rounded-full bg-transparent text-xs"
-                    onClick={() => setPrompt(suggestion)}
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
+            <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
+              <h3 className="text-lg font-medium text-foreground">Your Assignments</h3>
+              <AssignmentList assignments={assignments} isLoading={isLoadingAssignments} />
             </div>
           </div>
 
-          {/* Right Column - Calendar */}
-          <div className="flex flex-col items-center lg:items-end">
-            <div className="bg-background rounded-2xl border border-border p-4">
-              <h3 className="text-lg font-medium text-foreground mb-4 text-center">
-                Your Schedule
-              </h3>
-              <Calendar className="rounded-xl" />
-              {selectedDate && (
-                <div className="mt-4 pt-4 border-t border-border">
-                  <p className="text-sm text-muted-foreground text-center">
-                    Selected: {selectedDate.toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
+          {/* Right Column — AI Prompt */}
+          <div className="space-y-6">
+            <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
+              <h3 className="text-lg font-medium text-foreground">AI Study Planner</h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="relative">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Tell me about your tasks, deadlines, or study plans..."
+                    className="w-full min-h-32 p-4 pr-12 rounded-2xl border border-border bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  />
+                  <Button
+                    type="submit"
+                    className="absolute bottom-3 right-3 rounded-full bg-foreground text-background hover:bg-foreground/90"
+                    disabled={!prompt.trim()}
+                  >
+                    <Send className="w-4 h-4" />
+                    <span className="sr-only">Send prompt</span>
+                  </Button>
                 </div>
-              )}
+              </form>
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Quick prompts:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Plan my study schedule",
+                    "Help with assignment deadlines",
+                    "Organize my week",
+                  ].map((suggestion) => (
+                    <Button
+                      key={suggestion}
+                      variant="outline"
+                      className="rounded-full bg-transparent text-xs"
+                      onClick={() => setPrompt(suggestion)}
+                    >
+                      {suggestion}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
