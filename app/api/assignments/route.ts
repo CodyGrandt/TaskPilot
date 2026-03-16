@@ -53,8 +53,10 @@ export async function POST(req: NextRequest) {
     data: {
       title: parsed.data.title,
       description: parsed.data.description,
-      dueDate: new Date(parsed.data.dueDate),
+      dueDate: new Date(parsed.data.dueDate + "T00:00:00.000Z"),
+      dueTime: parsed.data.dueTime || null,
       priority: parsed.data.priority,
+      status: parsed.data.status,
       userId: user.id,
     },
   });
