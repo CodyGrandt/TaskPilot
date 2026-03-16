@@ -5,6 +5,7 @@ import { useUser, SignOutButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { AssignmentForm } from "@/components/ui/AssignmentForm";
 import { AssignmentList } from "@/components/ui/AssignmentList";
+import { AssignmentCalendar } from "@/components/ui/AssignmentCalendar";
 import { Send } from "lucide-react";
 
 type Assignment = {
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const [prompt, setPrompt] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(true);
+  const [view, setView] = useState<"list" | "calendar">("list");
 
   const fetchAssignments = useCallback(async () => {
     setIsLoadingAssignments(true);
@@ -117,8 +119,13 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Column — AI Prompt */}
+          {/* Right Column — Calendar + AI Prompt */}
           <div className="space-y-6">
+            <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
+              <h3 className="text-lg font-medium text-foreground">Assignment Calendar</h3>
+              <AssignmentCalendar assignments={assignments} />
+            </div>
+
             <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
               <h3 className="text-lg font-medium text-foreground">AI Study Planner</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
