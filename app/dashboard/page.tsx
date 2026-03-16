@@ -35,7 +35,7 @@ function PilotIcon({ size = "default" }: { size?: "small" | "default" }) {
 export default function Dashboard() {
   const { user } = useUser();
   const [prompt, setPrompt] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate] = useState<Date | undefined>(new Date());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +60,7 @@ export default function Dashboard() {
               {user?.firstName || "Pilot"}
             </span>
             <SignOutButton>
-              <Button variant="outline" size="sm" className="rounded-full bg-transparent">
+              <Button variant="outline" className="rounded-full bg-transparent">
                 Sign Out
               </Button>
             </SignOutButton>
@@ -93,7 +93,6 @@ export default function Dashboard() {
                 />
                 <Button
                   type="submit"
-                  size="icon"
                   className="absolute bottom-3 right-3 rounded-full bg-foreground text-background hover:bg-foreground/90"
                   disabled={!prompt.trim()}
                 >
@@ -115,7 +114,6 @@ export default function Dashboard() {
                   <Button
                     key={suggestion}
                     variant="outline"
-                    size="sm"
                     className="rounded-full bg-transparent text-xs"
                     onClick={() => setPrompt(suggestion)}
                   >
@@ -132,12 +130,7 @@ export default function Dashboard() {
               <h3 className="text-lg font-medium text-foreground mb-4 text-center">
                 Your Schedule
               </h3>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-xl"
-              />
+              <Calendar className="rounded-xl" />
               {selectedDate && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <p className="text-sm text-muted-foreground text-center">
