@@ -114,18 +114,33 @@ export default function Dashboard() {
             </div>
 
             <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
-              <h3 className="text-lg font-medium text-foreground">Your Assignments</h3>
-              <AssignmentList assignments={assignments} isLoading={isLoadingAssignments} onDelete={handleDelete} />
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-foreground">Your Assignments</h3>
+                <div className="flex rounded-xl border border-border overflow-hidden text-sm">
+                  <button
+                    onClick={() => setView("list")}
+                    className={`px-3 py-1 transition-colors ${view === "list" ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`}
+                  >
+                    List
+                  </button>
+                  <button
+                    onClick={() => setView("calendar")}
+                    className={`px-3 py-1 transition-colors ${view === "calendar" ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`}
+                  >
+                    Calendar
+                  </button>
+                </div>
+              </div>
+              {view === "list" ? (
+                <AssignmentList assignments={assignments} isLoading={isLoadingAssignments} onDelete={handleDelete} />
+              ) : (
+                <AssignmentCalendar assignments={assignments} onDelete={handleDelete} />
+              )}
             </div>
           </div>
 
-          {/* Right Column — Calendar + AI Prompt */}
+          {/* Right Column — AI Prompt */}
           <div className="space-y-6">
-            <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
-              <h3 className="text-lg font-medium text-foreground">Assignment Calendar</h3>
-              <AssignmentCalendar assignments={assignments} />
-            </div>
-
             <div className="bg-background rounded-2xl border border-border p-5 space-y-4">
               <h3 className="text-lg font-medium text-foreground">AI Study Planner</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
