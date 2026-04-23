@@ -33,6 +33,8 @@ function Logo() {
 export default function Dashboard() {
   const { user } = useUser();
   const [prompt, setPrompt] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -63,9 +65,40 @@ export default function Dashboard() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim()) { console.log("prompt:", prompt); setPrompt(""); }
+    if (!prompt.trim() || isGenerating) return;
+
+    setIsGenerating(true);
+    setAiResponse("");
+
+    try {
+      const res = await fetch("/api/study-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setAiResponse(err.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        setAiResponse((prev) => prev + decoder.decode(value, { stream: true }));
+      }
+
+      setPrompt("");
+    } catch {
+      setAiResponse("Network error. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -172,13 +205,14 @@ export default function Dashboard() {
                     <textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Describe your tasks and deadlines..."
-                      rows={4}
-                      className="w-full rounded-lg border border-border bg-muted px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-colors"
+                      placeholder="Ask for a study plan, deadline help, or weekly schedule..."
+                      rows={3}
+                      disabled={isGenerating}
+                      className="w-full rounded-lg border border-border bg-muted px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-colors disabled:opacity-50"
                     />
                     <button
                       type="submit"
-                      disabled={!prompt.trim()}
+                      disabled={!prompt.trim() || isGenerating}
                       className="absolute bottom-2.5 right-2.5 p-1.5 rounded-md bg-foreground text-background disabled:opacity-30 hover:opacity-80 transition-opacity"
                     >
                       <Send className="w-3.5 h-3.5" />
@@ -190,12 +224,29 @@ export default function Dashboard() {
                     <button
                       key={s}
                       onClick={() => setPrompt(s)}
-                      className="text-xs text-muted-foreground border border-border bg-background rounded-md px-2.5 py-1 hover:bg-muted transition-colors"
+                      disabled={isGenerating}
+                      className="text-xs text-muted-foreground border border-border bg-background rounded-md px-2.5 py-1 hover:bg-muted transition-colors disabled:opacity-40"
                     >
                       {s}
                     </button>
                   ))}
                 </div>
+
+                {isGenerating && !aiResponse && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse" />
+                    Generating your study plan…
+                  </div>
+                )}
+
+                {aiResponse && (
+                  <div className="rounded-lg border border-border bg-muted p-3 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                    {aiResponse}
+                    {isGenerating && (
+                      <span className="inline-block w-0.5 h-3.5 bg-foreground ml-0.5 animate-pulse align-text-bottom" />
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
