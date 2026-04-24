@@ -3,8 +3,6 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 const SYSTEM_PROMPT = `You are an expert AI study planner helping a student manage their academic workload. \
 You have access to their current assignments, due dates, priorities, and completion statuses.
 
@@ -33,6 +31,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "AI service is not configured." }, { status: 503 });
+  }
+
   const { userId: clerkId } = await auth();
   if (!clerkId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -75,6 +77,7 @@ export async function POST(req: Request) {
 
   const userMessage = `My current assignments:\n${assignmentContext}\n\nMy request: ${prompt}`;
 
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   let fullText = "";
 
   const readableStream = new ReadableStream({
